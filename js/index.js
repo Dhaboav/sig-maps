@@ -68,19 +68,15 @@ function showDatabaseMarkers(data) {
     marker.name = name;
 
     // Function to fetch image status
-    function fetchImageStatus(imageName) {
-        return fetch('php/check_image.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ filename: imageName }),
-        })
+    function fetchImageStatus(img) {
+        return fetch(`php/check_image.php?filename=${encodeURIComponent(img)}`)
         .then(response => response.json())
         .then(data => {
             if (data.status === 'ok') {
+                console.log('Image path:', data.path);
                 return data.path;
             } else {
+                console.log('No image available for', data.path);
                 return null;
             }
         })
@@ -96,14 +92,24 @@ function showDatabaseMarkers(data) {
     // Fetch image status and update the info window content
     fetchImageStatus(img)
     .then(imagePath => {
-        let content = `
+        let content = '';
+        if (imagePath) {
+            content += `
+                <div>
+                    <img src="${imagePath}" alt="${name}" style="max-width:100%; max-height:150px;"><br>
+                </div>
+            `;
+        } else {
+            content += `<p>No image available</p>`;
+        }
+        content += `
             <div>
                 <h3>${name} <button class="edit-name-button" data-id="${id}">Edit Nama</button></h3>
                 <div>
                     <p>
                     lat: ${lat}, lng: ${lng}
                     <br>
-                    ${img}
+                    Deskripsi Tempat: ${desc}
                     <br><br>
                     <button class="delete-button" data-id="${id}">Delete</button>
                     <button class="edit-button" data-id="${id}">Edit</button>
@@ -111,13 +117,6 @@ function showDatabaseMarkers(data) {
                 </div>
             </div>
         `;
-        if (imagePath) {
-            content += `
-                <div>
-                    <img src="${imagePath}" alt="${name}" style="max-width:100%;"><br>
-                </div>
-            `;
-        }
         infowindow.setContent(content);
     })
     .catch(error => {
@@ -140,26 +139,20 @@ function showDatabaseMarkers(data) {
         `);
     });
 
-    google.maps.event.addListener(infowindow, "domready", function () {
-        document
-            .querySelector(".delete-button")
-            .addEventListener("click", function () {
-                confirmDelete(id);
-            });
-
-        document
-            .querySelector(".edit-button")
-            .addEventListener("click", function () {
-                enableEdit(marker);
-            });
-
-        document
-            .querySelector(".edit-name-button")
-            .addEventListener("click", function () {
-                editName(id);
-            });
+    google.maps.event.addListener(infowindow, "domready", () => {
+        document.querySelector(".delete-button").addEventListener("click", () => {
+            confirmDelete(marker.id);
+        });
+    
+        document.querySelector(".edit-button").addEventListener("click", () => {
+            enableEdit(marker);
+        });
+    
+        document.querySelector(".edit-name-button").addEventListener("click", () => {
+            editName(marker.id);
+        });
     });
-
+    
     marker.addListener("click", () => {
         if (currentInfoWindow) {
             currentInfoWindow.close();
@@ -190,45 +183,46 @@ function showDatabaseMarkers(data) {
 }
 
 
-
 function editName(id) {
-    if (confirm("Are you sure you want to edit this marker name?")) {
-        const marker = markers.find((m) => m.id === id);
-        if (marker) {
-            const newName = prompt("Enter the new name for the marker:", marker.name);
-            if (newName !== null && newName !== "") {
-                fetch("php/update_marker_name.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        id: marker.id,
-                        name: newName,
-                    }),
-                })
-                .then((response) => response.json())
-                .then((data) => {
-                    if (data.success) {
-                        marker.name = newName;
-                        marker.setTitle(newName);
-                        updateInfoWindow(marker);
-                        alert("Marker name updated successfully!");
-                    } else {
-                        alert("Error updating marker name: " + data.message);
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error updating marker name:", error);
-                });
-            } else {
-                alert("Marker name update canceled or invalid.");
-            }
-        } else {
-            alert("Marker not found.");
+    const marker = markers.find((m) => m.id === id);
+    if (!marker) {
+        alert("Marker not found.");
+        return;
+    }
+
+    const newName = prompt("Enter the new name for the marker:", marker.name);
+    if (newName !== null && newName !== "") {
+        if (confirm("Are you sure you want to edit this marker name?")) {
+            fetch("php/update_marker_name.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    id: marker.id,
+                    name: newName,
+                }),
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data.success) {
+                    marker.name = newName;
+                    updateInfoWindow(marker); // Update info window content
+                    alert("Marker name updated successfully!");
+                    location.reload(); // Refresh the webpage
+                } else {
+                    alert("Error updating marker name: " + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error("Error updating marker name:", error);
+            });
         }
+    } else {
+        alert("Marker name update canceled or invalid.");
     }
 }
+
 
 function updateInfoWindow(marker) {
     // Find and update the info window content

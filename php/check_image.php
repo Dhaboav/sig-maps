@@ -2,20 +2,14 @@
 header('Content-Type: application/json');
 
 // Get the filename from the request
-$filename = isset($_POST['filename']) ? basename($_POST['filename']) : '';
+$filename = isset($_GET['filename']) ? basename($_GET['filename']) : '';
 
 if ($filename) {
-    // Define the directory path
-    $directory = '../img/';
-    // Full file path
-    $filepath = $directory . $filename;
+    // Construct the relative path to the image file
+    $relativePath = 'img/' . $filename;
 
-    // Check if the file exists
-    if (file_exists($filepath)) {
-        echo json_encode(['status' => 'ok', 'path' => $filepath]);
-    } else {
-        echo json_encode(['status' => 'no']);
-    }
+    // Return the relative path as the URL
+    echo json_encode(['status' => 'ok', 'path' => $relativePath]);
 } else {
     echo json_encode(['status' => 'no', 'message' => 'No filename provided']);
 }
