@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Maps SIG</title>
+		<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+		<link rel="stylesheet" type="text/css" href="css/style.css" />
+		<script type="module" src="js/index.js"></script>
+		<script src="js/apikey.js"></script>
+		<script>
+			function loadMapScript() {
+				const script = document.createElement("script");
+				script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=initMap`;
+				script.async = true;
+				document.head.appendChild(script);
+			}
+		</script>
+	</head>
+	<body>
+		<div id="floating-panel">
+			<input
+				id="hide-markers"
+				type="button"
+				value="Hide Database Markers"
+			/>
+			<input
+				id="show-markers"
+				type="button"
+				value="Show Database Markers"
+			/>
+			<input
+				id="delete-markers"
+				type="button"
+				value="Delete Temporary Marker"
+			/>
+			<br />
+			<form
+				id="form-input"
+				action="php/save_to_database.php"
+				method="post"
+			>
+				<input
+					id="latitude"
+					type="text"
+					name="latitude"
+					value=""
+					placeholder="Latitude"
+				/>
+				<input
+					id="longitude"
+					type="text"
+					name="longitude"
+					value=""
+					placeholder="Longitude"
+				/>
+				<input
+					id="name-of-location"
+					name="name-of-location"
+					type="text"
+					value=""
+					placeholder="Name"
+				/>
+				<button id="submit-button" type="submit">Submit</button>
+			</form>
+		</div>
+		<div id="map"></div>
+		<script>
+			window.onload = loadMapScript;
+		</script>
+	</body>
+</html>
