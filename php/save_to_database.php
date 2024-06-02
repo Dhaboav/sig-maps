@@ -14,7 +14,7 @@ if ($conn->connect_error) {
 }
 
 // Check if all required fields are set
-if (!isset($_POST['name-of-location'], $_POST['latitude'], $_POST['longitude'])) {
+if (!isset($_POST['name-of-location'], $_POST['latitude'], $_POST['longitude'], $_POST['description'], $_POST['photo'])) {
     die("One or more required fields are missing.");
 }
 
@@ -22,14 +22,17 @@ if (!isset($_POST['name-of-location'], $_POST['latitude'], $_POST['longitude']))
 $name = $_POST['name-of-location'];
 $latitude = $_POST['latitude'];
 $longitude = $_POST['longitude'];
+$desc = $_POST['description'];
+$img = $_POST['photo'];
+
 
 // Validate latitude and longitude
-if ($latitude === '' || $longitude === '') {
-    die("Latitude and longitude cannot be empty.");
+if ($latitude === '' || $longitude === '' || $desc === ''|| $img === '') {
+    die("There is empty data");
 }
 
 // Prepare SQL query
-$sql = "INSERT INTO poi (name, latitude, longitude) VALUES ('$name', '$latitude', '$longitude')";
+$sql = "INSERT INTO poitugas (name, latitude, longitude, deskripsi, linkfoto) VALUES ('$name', '$latitude', '$longitude', '$desc', '$img')";
 
 // Execute SQL query
 if ($conn->query($sql) === TRUE) {

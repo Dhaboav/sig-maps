@@ -25,6 +25,8 @@ function initMap() {
                     name: markerData.name,
                     lat: parseFloat(markerData.latitude),
                     lng: parseFloat(markerData.longitude),
+                    desc: markerData.deskripsi,
+                    img: markerData.linkfoto
                 };
                 showDatabaseMarkers(data);
             });
@@ -50,7 +52,7 @@ function initMap() {
 }
 
 function showDatabaseMarkers(data) {
-    const { id, name, lat, lng } = data;
+    const { id, name, lat, lng, desc, img } = data;
 
     const marker = new google.maps.Marker({
         position: { lat, lng },
@@ -65,20 +67,77 @@ function showDatabaseMarkers(data) {
     marker.id = id;
     marker.name = name;
 
-    const infowindow = new google.maps.InfoWindow({
-        content: `
+    // Function to fetch image status
+    function fetchImageStatus(imageName) {
+        return fetch('php/check_image.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ filename: imageName }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'ok') {
+                return data.path;
+            } else {
+                return null;
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching image status:', error);
+            return null;
+        });
+    }
+
+    // Create the info window with the initial content
+    const infowindow = new google.maps.InfoWindow();
+
+    // Fetch image status and update the info window content
+    fetchImageStatus(img)
+    .then(imagePath => {
+        let content = `
             <div>
                 <h3>${name} <button class="edit-name-button" data-id="${id}">Edit Nama</button></h3>
                 <div>
                     <p>
                     lat: ${lat}, lng: ${lng}
+                    <br>
+                    ${img}
                     <br><br>
                     <button class="delete-button" data-id="${id}">Delete</button>
                     <button class="edit-button" data-id="${id}">Edit</button>
                     </p>
                 </div>
             </div>
-        `,
+        `;
+        if (imagePath) {
+            content += `
+                <div>
+                    <img src="${imagePath}" alt="${name}" style="max-width:100%;"><br>
+                </div>
+            `;
+        }
+        infowindow.setContent(content);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        infowindow.setContent(`
+            <div>
+                <h3>${name} <button class="edit-name-button" data-id="${id}">Edit Nama</button></h3>
+                <div>
+                    <p>
+                    lat: ${lat}, lng: ${lng}
+                    <br>
+                    ${desc}
+                    <br><br>
+                    <button class="delete-button" data-id="${id}">Delete</button>
+                    <button class="edit-button" data-id="${id}">Edit</button>
+                    </p>
+                </div>
+            </div>
+            <p>Error fetching image</p>
+        `);
     });
 
     google.maps.event.addListener(infowindow, "domready", function () {
@@ -129,6 +188,8 @@ function showDatabaseMarkers(data) {
 
     markers.push(marker);
 }
+
+
 
 function editName(id) {
     if (confirm("Are you sure you want to edit this marker name?")) {
@@ -318,6 +379,7 @@ function deleteMarkers() {
         marker.setMap(null);
     });
     tempMarkers = [];
+    deletePositionText();
 }
 
 function setMapOnAll(map) {

@@ -22,7 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Prepare and execute SQL DELETE statement
-    $sql = "DELETE FROM poi WHERE idpoi = ?";
+    $sql = "DELETE FROM poitugas WHERE idpoi = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id);
 

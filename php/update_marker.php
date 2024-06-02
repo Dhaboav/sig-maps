@@ -24,7 +24,7 @@ $latitude = $conn->real_escape_string($data['lat']);
 $longitude = $conn->real_escape_string($data['lng']);
 
 // Prepare the SQL statement
-$sql = "UPDATE poi SET name='$name', latitude='$latitude', longitude='$longitude' WHERE idpoi='$id'";
+$sql = "UPDATE poitugas SET name='$name', latitude='$latitude', longitude='$longitude' WHERE idpoi='$id'";
 
 if ($conn->query($sql) === TRUE) {
     echo json_encode(["success" => true, "message" => "Marker updated successfully"]);

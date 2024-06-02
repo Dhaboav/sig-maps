@@ -27,7 +27,7 @@ $id = $conn->real_escape_string($data['id']);
 $name = $conn->real_escape_string($data['name']);
 
 // Prepare the SQL query to update the marker's name
-$sql = "UPDATE poi SET name = '$name' WHERE idpoi = '$id'";
+$sql = "UPDATE poitugas SET name = '$name' WHERE idpoi = '$id'";
 
 // Execute the query
 if ($conn->query($sql) === TRUE) {

@@ -14,7 +14,7 @@ if ($conn->connect_error) {
 }
 
 // Retrieve latitude and longitude from the database
-$sql = "SELECT * FROM poi";
+$sql = "SELECT * FROM poitugas";
 $result = $conn->query($sql);
 
 // Prepare marker data array
