@@ -1,10 +1,14 @@
 let map;
+let userCircle;
+let userMarker;
 let markers = [];
 let tempMarkers = [];
-let currentInfoWindow = null;
 let dragTimeout = null;
 let draggedMarker = null;
+let addMarkerMode = false;
 let originalPosition = null;
+let currentInfoWindow = null;
+
 
 function initMap() {
     if (navigator.geolocation) {
@@ -13,61 +17,66 @@ function initMap() {
                 lat: position.coords.latitude,
                 lng: position.coords.longitude
             };
-            console.log("User location:", userLocation); // Log user's location
-    
-            // Initialize the map centered on the user's location
+            console.log("User location:", userLocation);
+
             map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 20,
                 center: userLocation,
                 mapTypeId: "terrain",
             });
-    
-            // Add a marker at the user's location
-            new google.maps.Marker({
+
+            userMarker = new google.maps.Marker({
                 position: userLocation,
                 map: map,
                 title: "You are here"
             });
-    
+
+            updateCircle(userLocation);
+
         }, function(error) {
             console.error("Error fetching GPS location: ", error);
-            // Fallback to default location if GPS fails
             const fallbackLocation = { lat: -0.05572, lng: 109.3485 }; // University of Tanjungpura
             console.log("Fallback location:", fallbackLocation);
-    
-            // Initialize the map centered on the fallback location
+
             map = new google.maps.Map(document.getElementById("map"), {
                 zoom: 20,
                 center: fallbackLocation,
                 mapTypeId: "terrain",
             });
-    
-            // Add a marker at the fallback location
-            new google.maps.Marker({
+
+            userMarker = new google.maps.Marker({
                 position: fallbackLocation,
                 map: map,
                 title: "Fallback location"
             });
+
+            updateCircle(fallbackLocation);
         });
     } else {
-        // Fallback if geolocation is not supported
         const fallbackLocation = { lat: -0.05572, lng: 109.3485 }; // University of Tanjungpura
         console.log("Fallback location:", fallbackLocation);
-    
-        // Initialize the map centered on the fallback location
+
         map = new google.maps.Map(document.getElementById("map"), {
             zoom: 20,
             center: fallbackLocation,
             mapTypeId: "terrain",
         });
-    
-        // Add a marker at the fallback location
-        new google.maps.Marker({
+
+        userMarker = new google.maps.Marker({
             position: fallbackLocation,
             map: map,
             title: "Fallback location"
         });
-    }    
+
+        updateCircle(fallbackLocation);
+    }
+
+    // Add event listener to the "Update Radius" button
+    document.getElementById("update-radius").addEventListener("click", () => {
+        const radius = parseFloat(document.getElementById("radius").value) || 10; // Default to 100 meters if empty
+        updateCircle(userMarker.getPosition(), radius);
+    });
+    
 
     // Fetch marker data from markers.php
     fetch("php/markers.php")
@@ -90,11 +99,18 @@ function initMap() {
             console.error("Error fetching marker data:", error);
         });
 
-    map.addListener("click", (event) => {
-        deleteTemporaryMarkers();
-        addMarker(event.latLng);
+    // Attach event listener to the button
+    document.getElementById("add-marker").addEventListener("click", () => {
+        addMarkerMode = !addMarkerMode; // Toggle marker adding mode
+        if (addMarkerMode) {
+            map.addListener("click", onMapClick);
+            console.log("Add marker mode enabled");
+        } else {
+            google.maps.event.clearListeners(map, 'click');
+            console.log("Add marker mode disabled");
+        }
     });
-
+    
     document
         .getElementById("show-markers")
         .addEventListener("click", showMarkers);
@@ -407,6 +423,11 @@ function addMarker(position) {
     addPositionText(position);
 }
 
+function onMapClick(event) {
+    deleteTemporaryMarkers();
+    addMarker(event.latLng);
+}
+
 function deleteTemporaryMarkers() {
     tempMarkers.forEach((marker) => {
         marker.setMap(null);
@@ -460,4 +481,21 @@ function clearLatLngDisplay() {
     document.getElementById("longitude").value = "";
 }
 
+function updateCircle(center, radius) {
+    // Remove existing circle if it exists
+    if (userCircle) {
+        userCircle.setMap(null);
+    }
+
+    userCircle = new google.maps.Circle({
+        strokeColor: "#008000", // Orange color
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: "#008000", // Orange color
+        fillOpacity: 0.25,
+        map: map,
+        center: center,
+        radius: radius
+    });
+}
 window.initMap = initMap;
