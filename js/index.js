@@ -7,12 +7,67 @@ let draggedMarker = null;
 let originalPosition = null;
 
 function initMap() {
-    const universityOfTanjungpura = { lat: -0.05572, lng: 109.3485 };
-    map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 20,
-        center: universityOfTanjungpura,
-        mapTypeId: "terrain",
-    });
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const userLocation = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            console.log("User location:", userLocation); // Log user's location
+    
+            // Initialize the map centered on the user's location
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 20,
+                center: userLocation,
+                mapTypeId: "terrain",
+            });
+    
+            // Add a marker at the user's location
+            new google.maps.Marker({
+                position: userLocation,
+                map: map,
+                title: "You are here"
+            });
+    
+        }, function(error) {
+            console.error("Error fetching GPS location: ", error);
+            // Fallback to default location if GPS fails
+            const fallbackLocation = { lat: -0.05572, lng: 109.3485 }; // University of Tanjungpura
+            console.log("Fallback location:", fallbackLocation);
+    
+            // Initialize the map centered on the fallback location
+            map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 20,
+                center: fallbackLocation,
+                mapTypeId: "terrain",
+            });
+    
+            // Add a marker at the fallback location
+            new google.maps.Marker({
+                position: fallbackLocation,
+                map: map,
+                title: "Fallback location"
+            });
+        });
+    } else {
+        // Fallback if geolocation is not supported
+        const fallbackLocation = { lat: -0.05572, lng: 109.3485 }; // University of Tanjungpura
+        console.log("Fallback location:", fallbackLocation);
+    
+        // Initialize the map centered on the fallback location
+        map = new google.maps.Map(document.getElementById("map"), {
+            zoom: 20,
+            center: fallbackLocation,
+            mapTypeId: "terrain",
+        });
+    
+        // Add a marker at the fallback location
+        new google.maps.Marker({
+            position: fallbackLocation,
+            map: map,
+            title: "Fallback location"
+        });
+    }    
 
     // Fetch marker data from markers.php
     fetch("php/markers.php")
