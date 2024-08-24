@@ -1,18 +1,14 @@
 <?php
-// Check if the request method is POST
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Retrieve the marker ID from the request body
-    $data = json_decode(file_get_contents("php://input"), true);
-    $id = $data["id"];
+include 'database.php';
 
-    // Database connection settings
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "gis2024";
+    // Check if the request method is POST
+    if ($_SERVER["REQUEST_METHOD"] == "POST") {
+        // Retrieve the marker ID from the request body
+        $data = json_decode(file_get_contents("php://input"), true);
+        $id = $data["id"];
 
-    // Create connection
-    $conn = new mysqli($servername, $username, $password, $dbname);
+        // Create database connection
+        $conn = getDbConnection();
 
     // Check connection
     if ($conn->connect_error) {
@@ -22,7 +18,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 
     // Prepare and execute SQL DELETE statement
-    $sql = "DELETE FROM poitugas WHERE idpoi = ?";
+    $tableName = 'poitugas'; 
+    $sql = "DELETE FROM `$tableName` WHERE idpoi = ?";
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("i", $id);
 

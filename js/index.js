@@ -264,7 +264,7 @@ function editName(id) {
     const newName = prompt("Enter the new name for the marker:", marker.name);
     if (newName !== null && newName !== "") {
         if (confirm("Are you sure you want to edit this marker name?")) {
-            fetch("php/update_marker_name.php", {
+            fetch("php/update_name.php", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -387,7 +387,7 @@ function deleteMarker(id) {
         markers.splice(markerIndex, 1);
     }
 
-    fetch("php/delete_marker.php", {
+    fetch("php/delete.php", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

@@ -1,28 +1,32 @@
 <?php
-// Database connection parameters
-$servername = "localhost";
-$username = "root";
-$password = ""; // You may need to set a password if it's configured for your MySQL server
-$database = "gis2024"; // Change this to your database name
+include 'database.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $database);
+// Create database connection
+$conn = getDbConnection();
 
 // Check connection
 if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+    die(json_encode(["success" => false, "message" => "Connection failed: " . $conn->connect_error]));
 }
 
-// Retrieve latitude and longitude from the database
-$sql = "SELECT * FROM poitugas";
+// Retrieve data from the database
+$tableName = 'poitugas'; 
+$sql = "SELECT * FROM `$tableName`";
+
 $result = $conn->query($sql);
 
 // Prepare marker data array
 $markers = array();
+if ($result === FALSE) {
+    die(json_encode(["success" => false, "message" => "Error executing query: " . $conn->error]));
+}
+
 if ($result->num_rows > 0) {
     while($row = $result->fetch_assoc()) {
         $markers[] = $row;
     }
+} else {
+    echo 'No results found.<br>';
 }
 
 // Close connection

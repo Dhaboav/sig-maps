@@ -1,12 +1,8 @@
 <?php
-// Database connection parameters
-$servername = "localhost";
-$username = "root";
-$password = ""; // You may need to set a password if it's configured for your MySQL server
-$database = "gis2024"; // Change this to your database name
+include 'database.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $database);
+// Create database connection
+$conn = getDbConnection();
 
 // Check connection
 if ($conn->connect_error) {
@@ -32,7 +28,8 @@ if ($latitude === '' || $longitude === '' || $desc === ''|| $img === '') {
 }
 
 // Prepare SQL query
-$sql = "INSERT INTO poitugas (name, latitude, longitude, deskripsi, linkfoto) VALUES ('$name', '$latitude', '$longitude', '$desc', '$img')";
+$tableName = 'poitugas'; 
+$sql = "INSERT INTO `$tableName` (name, latitude, longitude, deskripsi, linkfoto) VALUES ('$name', '$latitude', '$longitude', '$desc', '$img')";
 
 // Execute SQL query
 if ($conn->query($sql) === TRUE) {

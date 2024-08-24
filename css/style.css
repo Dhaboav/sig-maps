@@ -1,37 +1,78 @@
-/* Map styling */
-#map {
-	height: 100%;
-}
 
-/* Full page height for HTML and body */
-html,
 body {
-	height: 100%;
-	margin: 0;
-	padding: 0;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
 }
 
-/* Styling for the floating panel */
 #floating-panel {
-	position: absolute;
-	top: 10px;
-	left: 25%;
-	z-index: 5;
-	background-color: #fff;
-	padding: 5px;
-	border: 1px solid #999;
-	text-align: center;
-	font-family: "Roboto", "sans-serif";
-	line-height: 30px;
-	padding-left: 10px;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    font-size: 14px;
+    width: 320px;
+    padding: 10px;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 5;
 }
 
-#floating-panel #submit-button:hover {
-	background-color: green;
-	color: white;
+#floating-panel input[type="button"],
+#floating-panel button {
+    background: #007bff;
+    border: none;
+    border-radius: 3px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 6px 12px;
+    margin: 5px 0;
+    transition: background-color 0.3s ease;
 }
 
-#floating-panel #delete-markers:hover {
-	background-color: red;
-	color: white;
+#floating-panel input[type="button"]:hover,
+#floating-panel button:hover {
+    background-color: #0056b3;
+}
+
+#floating-panel input[type="text"] {
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    font-size: 14px;
+    padding: 6px;
+    width: calc(100% - 12px);
+    margin-bottom: 10px;
+}
+
+#floating-panel input[type="number"] {
+    border: 1px solid #ccc;
+    border-radius: 3px;
+    box-sizing: border-box;
+    font-size: 14px;
+    padding: 6px;
+    width: calc(100% - 12px);
+}
+
+#floating-panel button {
+    width: 100%;
+}
+
+#map {
+    height: 100vh; /* Full height of the viewport */
+    width: 100%; /* Full width of the container */
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+input::placeholder {
+    color: #999;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
 }

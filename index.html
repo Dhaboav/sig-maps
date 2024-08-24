@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Maps SIG</title>
+    <title>SIG Maps</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <link rel="stylesheet" type="text/css" href="css/style.css" />
+    <link rel="stylesheet" type="text/css" href="css/style.css">
     <script type="module" src="js/index.js"></script>
     <script src="js/apikey.js"></script>
     <script>
@@ -22,13 +22,12 @@
         <input id="delete-markers" type="button" value="Delete Temporary Marker" />
 		<input id="add-marker" type="button" value="Add Marker" />
         <br />
-        <form id="form-input" action="php/save_to_database.php" method="post">
+        <form id="form-input" action="php/save.php" method="post">
+            <input id="name-of-location" name="name-of-location" type="text" value="" placeholder="Name" />
             <input id="latitude" type="text" name="latitude" value="" placeholder="Latitude" />
             <input id="longitude" type="text" name="longitude" value="" placeholder="Longitude" />
-            <input id="name-of-location" name="name-of-location" type="text" value="" placeholder="Name" />
-            <br/>
             <input id="description" name="description" type="text" value="" placeholder="Deskripsi Tempat" />
-            <input id="photo" name="photo" type="text" value="" placeholder="Nama Foto" />
+            <input id="photo" name="photo" type="text" value="" placeholder="Foto" />
             <button id="submit-button" type="submit">Submit</button>
         </form>
         <br/>

@@ -1,14 +1,8 @@
 <?php
 header('Content-Type: application/json');
 
-// Database credentials
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "gis2024";
-
-// Connect to the database
-$conn = new mysqli($servername, $username, $password, $dbname);
+// Create database connection
+$conn = getDbConnection();
 
 // Check the connection
 if ($conn->connect_error) {
