@@ -127,7 +127,7 @@ function showDatabaseMarkers(data) {
 
     const marker = new google.maps.Marker({
         position: { lat, lng },
-        map: map,
+        map: null,
         draggable: false,
         icon: {
             url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png",
@@ -496,6 +496,15 @@ function updateCircle(center, radius) {
         map: map,
         center: center,
         radius: radius
+    });
+
+    markers.forEach(marker => {
+        const distance = google.maps.geometry.spherical.computeDistanceBetween(marker.getPosition(), center);
+        if (distance <= radius) {
+            marker.setMap(map); 
+        } else {
+            marker.setMap(null);
+        }
     });
 }
 window.initMap = initMap;
