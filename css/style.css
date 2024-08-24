@@ -32,6 +32,22 @@ body {
     transition: background-color 0.3s ease;
 }
 
+#floating-panel #add-marker {
+    background: red;
+    border: none;
+    border-radius: 3px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 6px 12px;
+    margin: 5px 0;
+    transition: background-color 0.3s ease;
+}
+
+#floating-panel #add-marker {
+    background-color: #940d0d;
+}
+
 #floating-panel input[type="button"]:hover,
 #floating-panel button:hover {
     background-color: #0056b3;

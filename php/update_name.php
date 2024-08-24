@@ -1,35 +1,35 @@
 <?php
 header('Content-Type: application/json');
+include 'database.php';
 
 // Create database connection
 $conn = getDbConnection();
-
-// Check the connection
-if ($conn->connect_error) {
-    die(json_encode(['success' => false, 'message' => 'Database connection failed: ' . $conn->connect_error]));
-}
 
 // Get the JSON data from the POST request
 $data = json_decode(file_get_contents('php://input'), true);
 
 // Validate the input data
 if (!isset($data['id']) || !isset($data['name'])) {
-    die(json_encode(['success' => false, 'message' => 'Invalid input']));
+    echo json_encode(['success' => false, 'message' => 'Invalid input']);
+    exit();
 }
 
-$id = $conn->real_escape_string($data['id']);
-$name = $conn->real_escape_string($data['name']);
+$id = $data['id'];
+$name = $data['name'];
 
 // Prepare the SQL query to update the marker's name
-$sql = "UPDATE poitugas SET name = '$name' WHERE idpoi = '$id'";
+$sql = "UPDATE poitugas SET name = ? WHERE idpoi = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('si', $name, $id);
 
 // Execute the query
-if ($conn->query($sql) === TRUE) {
+if ($stmt->execute()) {
     echo json_encode(['success' => true, 'message' => 'Marker name updated successfully']);
 } else {
-    echo json_encode(['success' => false, 'message' => 'Error updating marker name: ' . $conn->error]);
+    echo json_encode(['success' => false, 'message' => 'Error updating marker name: ' . $stmt->error]);
 }
 
-// Close the database connection
+// Close the statement and connection
+$stmt->close();
 $conn->close();
 ?>

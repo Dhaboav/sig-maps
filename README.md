@@ -30,6 +30,6 @@
 |
 ├── db_config.json
 ├── .gitignore
-├── indes.html
+├── index.html
 └── README.md
 ```
