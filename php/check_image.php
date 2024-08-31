@@ -8,9 +8,16 @@ if ($filename) {
     // Construct the relative path to the image file
     $relativePath = 'img/' . $filename;
 
-    // Return the relative path as the URL
-    echo json_encode(['status' => 'ok', 'path' => $relativePath]);
+    // Construct the absolute path from the relative path
+    $absolutePath = __DIR__ . '/../' . $relativePath;
+
+    // Check if the file exists and set the response status
+    if (file_exists($absolutePath)) {
+        echo json_encode(['status' => 'ok', 'path' => $relativePath]);
+    } else {
+        echo json_encode(['status' => 'not']);
+    }
 } else {
-    echo json_encode(['status' => 'no', 'message' => 'No filename provided']);
+    echo json_encode(['status' => 'not']);
 }
 ?>
