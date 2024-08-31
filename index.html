@@ -1,43 +1,41 @@
-<!DOCTYPE html>
 <html>
-<head>
-    <title>SIG Maps</title>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
-    <script type="module" src="js/test.js"></script>
-    <script src="js/apikey.js"></script>
-    <script>
-        function loadMapScript() {
-            const script = document.createElement("script");
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&callback=initMap`;
-            script.async = true;
-            document.head.appendChild(script);
-        }
-    </script>
-</head>
-<body>
-    <div id="floating-panel">
-        <input id="hide-markers" type="button" value="Hide Database Markers" />
-        <input id="show-markers" type="button" value="Show Database Markers" />
-		<input id="add-marker" type="button" value="Add Marker" />
-        <br />
-        <form id="form-input" action="php/save.php" method="post">
-            <input id="name-of-location" name="name-of-location" type="text" value="" placeholder="Name" />
-            <input id="latitude" type="text" name="latitude" value="" placeholder="Latitude" />
-            <input id="longitude" type="text" name="longitude" value="" placeholder="Longitude" />
-            <input id="description" name="description" type="text" value="" placeholder="Deskripsi Tempat" />
-            <input id="photo" name="photo" type="text" value="" placeholder="Foto" />
-            <button id="submit-button" type="submit">Submit</button>
-        </form>
-        <br/>
-        <div>
-            <input id="radius" type="number" value="" placeholder="Radius (meters)" min="0" />
-            <button id="update-radius">Update Radius</button>
+	<head>
+		<title>Simple Map</title>
+
+		<link rel="stylesheet" type="text/css" href="css/style.css" />
+		<script type="module" src="js/main.js"></script>
+	</head>
+	<body>
+        <div id="floating-panel">
+            <input id="hide-markers" type="button" value="Hide Database Markers" />
+            <input id="show-markers" type="button" value="Show Database Markers" />
+            <input id="add-marker" type="button" value="Add Marker" />
+            <br />
+            <form id="form-input" action="php/save.php" method="post">
+                <input id="name-of-location" name="name-of-location" type="text" value="" placeholder="Name" />
+                <input id="latitude" type="text" name="latitude" value="" placeholder="Latitude" />
+                <input id="longitude" type="text" name="longitude" value="" placeholder="Longitude" />
+                <input id="description" name="description" type="text" value="" placeholder="Deskripsi Tempat" />
+                <input id="photo" name="photo" type="text" value="" placeholder="Foto" />
+                <button id="submit-button" type="submit">Submit</button>
+            </form>
+            <br/>
+            <div>
+                <input id="radius" type="number" value="" placeholder="Radius (meters)" min="0" />
+                <button id="update-radius">Update Radius</button>
+            </div>
         </div>
-    </div>
-    <div id="map"></div>
-    <script>
-        window.onload = loadMapScript;
-    </script>
-</body>
+		<div id="map"></div>
+
+		<!-- prettier-ignore -->
+		<script src="js/apikey.js"></script>
+		<!-- Load the config file -->
+		<script>
+			(function () {
+				var h,a,k,p = "The Google Maps JavaScript API",c = "google",l = "importLibrary",q = "__ib__";
+				var m = document,b = window;b = b[c] || (b[c] = {});
+				var d = b.maps || (b.maps = {}),r = new Set(),e = new URLSearchParams();
+				var u = () =>h ||(h = new Promise(async (f, n) => {await (a = m.createElement("script"));e.set("libraries", [...r] + "");for (k in { key: API_KEY, v: "weekly" })e.set(k.replace(/[A-Z]/g,(t) => "_" + t[0].toLowerCase()),{ key: API_KEY, v: "weekly" }[k]);e.set("callback", c + ".maps." + q);a.src = `https://maps.${c}apis.com/maps/api/js?` + e;d[q] = f;a.onerror = () =>(h = n(Error(p + " could not load.")));a.nonce = m.querySelector("script[nonce]")?.nonce || "";m.head.append(a);}));d[l]? console.warn(p + " only loads once. Ignoring:", {key: API_KEY,v: "weekly",}): (d[l] = (f, ...n) =>r.add(f) && u().then(() => d[l](f, ...n)));})();
+		</script>
+	</body>
 </html>
