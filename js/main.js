@@ -1,8 +1,11 @@
 let map;
 let markers = [];
 let markerWindow;
+let markerListener = null;
+let currentMarker = null;
 let markerAddMode = false;
 let markersMapStatus = true;
+
 
 // ================ MAP START ===============================================
 
@@ -48,6 +51,7 @@ function getUserLocation() {
 // Initialize the map
 async function initMap(location) {
 	const { Map, AdvancedMarkerElement } = await loadGoogleMaps();
+
 	map = new Map(document.getElementById("map"), {
 		center: location,
 		zoom: 14,
@@ -69,7 +73,7 @@ async function initMap(location) {
 	);
 
 	// Add event listeners for the buttons
-    document
+	document
 		.getElementById("show-markers")
 		.addEventListener("click", function () {
 			showMarkers();
@@ -79,17 +83,16 @@ async function initMap(location) {
 		.addEventListener("click", function () {
 			hideMarkers();
 		});
-    document
+	document
 		.getElementById("add-marker")
 		.addEventListener("click", function () {
 			addMarker();
 		});
-    document
+	document
 		.getElementById("reset-marker")
 		.addEventListener("click", function () {
 			resetButton();
 		});
-	
 }
 // ================ MAP END ===============================================
 
@@ -136,6 +139,10 @@ async function fetchImageStatus(imagePath) {
 // Create markers from the fetched data
 function databaseMarkers(markerData) {
 	// Create a new marker
+	const markerDatabase = document.createElement("img");
+	markerDatabase.src =
+		"https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+
 	const marker = new google.maps.marker.AdvancedMarkerElement({
 		map,
 		position: {
@@ -143,6 +150,7 @@ function databaseMarkers(markerData) {
 			lng: parseFloat(markerData.longitude),
 		},
 		title: markerData.name,
+		content: markerDatabase,
 	});
 
 	// Store additional information in the marker object
@@ -171,19 +179,27 @@ async function openMarkerWindow(marker, markerData) {
 }
 
 // Function to resetting
-function resetButton(){
-    if (!markersMapStatus) {
-        markers.forEach((marker) => (marker.map = map));
-        markersMapStatus = true;
-    }
-
-    if (markerAddMode) {
-        markerAddMode = false;
-    }
-    document.getElementById("hide-markers").style.backgroundColor = "#007bff";
-    document.getElementById("show-markers").style.backgroundColor = "#007bff";
-    document.getElementById("add-marker").style.backgroundColor = "#007bff";
-    console.log("Done resetting");
+function resetButton() {
+	if (!markersMapStatus) {
+		markers.forEach((marker) => (marker.map = map));
+		markersMapStatus = true;
+	}
+	if (markerAddMode) {
+		markerAddMode = false;
+	}
+	if (markerListener) {
+		google.maps.event.removeListener(markerListener);
+		markerListener = null;
+	}
+	if (currentMarker) {
+		currentMarker.setMap(null);
+		currentMarker = null;
+		removePosition();
+	}
+	document.getElementById("hide-markers").style.backgroundColor = "#007bff";
+	document.getElementById("show-markers").style.backgroundColor = "#007bff";
+	document.getElementById("add-marker").style.backgroundColor = "#007bff";
+	console.log("Done resetting");
 }
 
 // Function to show all markers
@@ -192,8 +208,9 @@ function showMarkers() {
 		markers.forEach((marker) => (marker.map = map));
 		markersMapStatus = true;
 
-        document.getElementById("show-markers").style.backgroundColor = "red";
-        document.getElementById("hide-markers").style.backgroundColor = "#007bff";
+		document.getElementById("show-markers").style.backgroundColor = "red";
+		document.getElementById("hide-markers").style.backgroundColor =
+			"#007bff";
 		console.log("Markers have been shown");
 	} else {
 		console.log("Markers already shown");
@@ -206,8 +223,9 @@ function hideMarkers() {
 		markers.forEach((marker) => (marker.map = null));
 		markersMapStatus = false;
 
-        document.getElementById("hide-markers").style.backgroundColor = "red";
-        document.getElementById("show-markers").style.backgroundColor = "#007bff";
+		document.getElementById("hide-markers").style.backgroundColor = "red";
+		document.getElementById("show-markers").style.backgroundColor =
+			"#007bff";
 		console.log("Markers have been hidden");
 	} else {
 		console.log("Markers already hidden");
@@ -215,16 +233,68 @@ function hideMarkers() {
 }
 
 // Function to add marker
-function addMarker(){
-    if (!markerAddMode){
-        markerAddMode = true;
-        document.getElementById("add-marker").style.backgroundColor = "red";
-        console.log('add marker on');
-    } else {
-        markerAddMode = false;
-        document.getElementById("add-marker").style.backgroundColor = "#007bff";
-        console.log('add marker off');
-    }
+async function addMarker() {
+	const { AdvancedMarkerElement } = await loadGoogleMaps();
+	const tempMark = document.createElement("img");
+	tempMark.src =
+		"https://developers.google.com/maps/documentation/javascript/examples/full/images/beachflag.png";
+
+	if (!markerAddMode) {
+		markerAddMode = true;
+		document.getElementById("add-marker").style.backgroundColor = "red";
+
+		// Remove existing markerListener if any
+		if (markerListener) {
+			google.maps.event.removeListener(markerListener);
+		}
+
+		// Add click event listener to the map
+		markerListener = map.addListener("click", function (event) {
+			// Remove the existing marker if it exists
+			if (currentMarker) {
+				currentMarker.setMap(null);
+				currentMarker = null;
+			}
+
+			// Create and add a new marker
+			currentMarker = new AdvancedMarkerElement({
+				map: map,
+				position: event.latLng,
+				title: "Temp Marker",
+				content: tempMark,
+			});
+			addPosition(event.latLng);
+			console.log("Marker added at position:", event.latLng);
+		});
+	} else {
+		markerAddMode = false;
+		document.getElementById("add-marker").style.backgroundColor = "#007bff";
+
+		// Remove click event listener from the map
+		if (markerListener) {
+			google.maps.event.removeListener(markerListener);
+			markerListener = null;
+		}
+
+		// Remove the current marker if needed
+		if (currentMarker) {
+			currentMarker.setMap(null);
+			currentMarker = null;
+		}
+		removePosition();
+	}
+}
+
+// Adding position to html
+function addPosition(position) {
+	document.getElementById("latitude").value = position.lat();
+	document.getElementById("longitude").value = position.lng();
+}
+
+// Delete position to html
+function removePosition() {
+	document.getElementById("latitude").value = "";
+	document.getElementById("longitude").value = "";
 }
 // ================ MARKER END ===============================================
 
