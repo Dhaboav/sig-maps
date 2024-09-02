@@ -4,24 +4,26 @@ let markerWindow;
 let markerListener = null;
 let currentMarker = null;
 let markerAddMode = false;
-let markersMapStatus = true;
-
+let markersMapStatus = false;
+let radiusStatus = false;
+let circle;
+let slider = document.getElementById("myRange");
+let output = document.getElementById("outputValue");
+let location = { lat: -0.05572, lng: 109.3485 }; // Default location
 
 // ================ MAP START ===============================================
 
 // Load Google Maps libraries
 async function loadGoogleMaps() {
-	const { Map } = await google.maps.importLibrary("maps");
+	const { Map, Circle, LatLng } = await google.maps.importLibrary("maps");
 	const { AdvancedMarkerElement } = await google.maps.importLibrary("marker");
-	return { Map, AdvancedMarkerElement };
+	const { spherical } = await google.maps.importLibrary("geometry");
+	return { Map, Circle, LatLng, AdvancedMarkerElement, spherical };
 }
 
 // Get user location
 function getUserLocation() {
 	return new Promise((resolve) => {
-		// Default location: University of Tanjungpura
-		let location = { lat: -0.05572, lng: 109.3485 };
-
 		if (navigator.geolocation) {
 			navigator.geolocation.getCurrentPosition(
 				(position) => {
@@ -49,50 +51,41 @@ function getUserLocation() {
 }
 
 // Initialize the map
-async function initMap(location) {
+async function initMap(userLocation) {
 	const { Map, AdvancedMarkerElement } = await loadGoogleMaps();
 
 	map = new Map(document.getElementById("map"), {
-		center: location,
+		center: userLocation,
 		zoom: 14,
 		mapId: "4504f8b37365c3d0", // Map ID for advanced markers
 	});
 
+	// Add GPS marker
 	new AdvancedMarkerElement({
 		map: map,
-		position: location,
+		position: userLocation,
 	});
 
-	// Initialize InfoWindow
 	markerWindow = new google.maps.InfoWindow();
 
-	// Fetch and display markers from the PHP backend
+	// Fetch and add database markers but don't show them yet
 	const markersData = await fetchMarkers();
-	markersData.forEach((markerData) =>
-		databaseMarkers(markerData, AdvancedMarkerElement)
-	);
+	markersData.forEach((markerData) => databaseMarkers(markerData));
 
-	// Add event listeners for the buttons
+	// Event listeners
 	document
 		.getElementById("show-markers")
-		.addEventListener("click", function () {
-			showMarkers();
-		});
+		.addEventListener("click", showMarkers);
 	document
 		.getElementById("hide-markers")
-		.addEventListener("click", function () {
-			hideMarkers();
-		});
-	document
-		.getElementById("add-marker")
-		.addEventListener("click", function () {
-			addMarker();
-		});
+		.addEventListener("click", hideMarkers);
+	document.getElementById("add-marker").addEventListener("click", addMarker);
 	document
 		.getElementById("reset-marker")
-		.addEventListener("click", function () {
-			resetButton();
-		});
+		.addEventListener("click", resetButton);
+	document
+		.getElementById("radius-button")
+		.addEventListener("click", radiusMode);
 }
 // ================ MAP END ===============================================
 
@@ -103,11 +96,11 @@ async function fetchMarkers() {
 	try {
 		const response = await fetch("php/markers.php");
 		const data = await response.json();
-		console.log(data); // Optional: Log the fetched data
+		console.log(data);
 		return data;
 	} catch (error) {
 		console.error("Error fetching marker data:", error);
-		return []; // Return an empty array in case of an error
+		return [];
 	}
 }
 
@@ -117,19 +110,10 @@ async function fetchImageStatus(imagePath) {
 		const response = await fetch(
 			`php/check_image.php?filename=${encodeURIComponent(imagePath)}`
 		);
-
 		if (!response.ok)
 			throw new Error(`HTTP error! Status: ${response.status}`);
-
 		const data = await response.json();
-
-		if (data.status === "ok") {
-			console.log("Returning image path:", data.path);
-			return data.path;
-		} else {
-			console.log("No image available. Returning fallback path.");
-			return "img/testo.png";
-		}
+		return data.status === "ok" ? data.path : "img/testo.png";
 	} catch (error) {
 		console.error("Error fetching image status:", error.message);
 		return "img/testo.png";
@@ -138,13 +122,12 @@ async function fetchImageStatus(imagePath) {
 
 // Create markers from the fetched data
 function databaseMarkers(markerData) {
-	// Create a new marker
 	const markerDatabase = document.createElement("img");
 	markerDatabase.src =
 		"https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
 
 	const marker = new google.maps.marker.AdvancedMarkerElement({
-		map,
+		map: null, // Set map to null initially
 		position: {
 			lat: parseFloat(markerData.latitude),
 			lng: parseFloat(markerData.longitude),
@@ -154,7 +137,13 @@ function databaseMarkers(markerData) {
 	});
 
 	// Store additional information in the marker object
-	markers.push(marker);
+	markers.push({
+		marker: marker,
+		position: new google.maps.LatLng(
+			markerData.latitude,
+			markerData.longitude
+		),
+	});
 
 	// Add click event listener to open the InfoWindow
 	marker.addListener("click", () => openMarkerWindow(marker, markerData));
@@ -163,9 +152,7 @@ function databaseMarkers(markerData) {
 
 // ================ MARKER START ===============================================
 async function openMarkerWindow(marker, markerData) {
-	const imagePath = await fetchImageStatus(markerData.linkfoto).catch(
-		() => null
-	);
+	const imagePath = await fetchImageStatus(markerData.linkfoto);
 	const content = `
         <div>
             <h3>${markerData.name}</h3>
@@ -173,20 +160,17 @@ async function openMarkerWindow(marker, markerData) {
             <img src="${imagePath}" alt="${markerData.name}" style="width:100px; height:auto;">
         </div>
     `;
-
 	markerWindow.setContent(content);
 	markerWindow.open(map, marker);
 }
 
 // Function to resetting
 function resetButton() {
-	if (!markersMapStatus) {
-		markers.forEach((marker) => (marker.map = map));
-		markersMapStatus = true;
+	if (markersMapStatus) {
+		markers.forEach((markerObj) => markerObj.marker.setMap(null));
+		markersMapStatus = false;
 	}
-	if (markerAddMode) {
-		markerAddMode = false;
-	}
+	if (markerAddMode) markerAddMode = false;
 	if (markerListener) {
 		google.maps.event.removeListener(markerListener);
 		markerListener = null;
@@ -194,20 +178,30 @@ function resetButton() {
 	if (currentMarker) {
 		currentMarker.setMap(null);
 		currentMarker = null;
-		removePosition();
+	}
+	removePosition();
+
+	if (radiusStatus) {
+		radiusStatus = false;
+		slider.disabled = true;
+		slider.value = 0;
+		output.innerHTML = 0 + " M";
+		if (circle) circle.setMap(null);
+		updateMarkersVisibility(); // Update markers visibility
 	}
 	document.getElementById("hide-markers").style.backgroundColor = "#007bff";
 	document.getElementById("show-markers").style.backgroundColor = "#007bff";
 	document.getElementById("add-marker").style.backgroundColor = "#007bff";
+	document.getElementById("radius-button").style.backgroundColor = "#007bff";
+	updateMarkersVisibility(); // Update markers visibility
 	console.log("Done resetting");
 }
 
 // Function to show all markers
 function showMarkers() {
 	if (!markersMapStatus) {
-		markers.forEach((marker) => (marker.map = map));
+		markers.forEach((markerObj) => markerObj.marker.setMap(map));
 		markersMapStatus = true;
-
 		document.getElementById("show-markers").style.backgroundColor = "red";
 		document.getElementById("hide-markers").style.backgroundColor =
 			"#007bff";
@@ -220,9 +214,8 @@ function showMarkers() {
 // Function to hide all markers
 function hideMarkers() {
 	if (markersMapStatus) {
-		markers.forEach((marker) => (marker.map = null));
+		markers.forEach((markerObj) => markerObj.marker.setMap(null));
 		markersMapStatus = false;
-
 		document.getElementById("hide-markers").style.backgroundColor = "red";
 		document.getElementById("show-markers").style.backgroundColor =
 			"#007bff";
@@ -243,20 +236,13 @@ async function addMarker() {
 		markerAddMode = true;
 		document.getElementById("add-marker").style.backgroundColor = "red";
 
-		// Remove existing markerListener if any
-		if (markerListener) {
-			google.maps.event.removeListener(markerListener);
-		}
+		if (markerListener) google.maps.event.removeListener(markerListener);
 
-		// Add click event listener to the map
 		markerListener = map.addListener("click", function (event) {
-			// Remove the existing marker if it exists
 			if (currentMarker) {
 				currentMarker.setMap(null);
 				currentMarker = null;
 			}
-
-			// Create and add a new marker
 			currentMarker = new AdvancedMarkerElement({
 				map: map,
 				position: event.latLng,
@@ -270,13 +256,10 @@ async function addMarker() {
 		markerAddMode = false;
 		document.getElementById("add-marker").style.backgroundColor = "#007bff";
 
-		// Remove click event listener from the map
 		if (markerListener) {
 			google.maps.event.removeListener(markerListener);
 			markerListener = null;
 		}
-
-		// Remove the current marker if needed
 		if (currentMarker) {
 			currentMarker.setMap(null);
 			currentMarker = null;
@@ -285,18 +268,97 @@ async function addMarker() {
 	}
 }
 
-// Adding position to html
+// Adding position to HTML
 function addPosition(position) {
 	document.getElementById("latitude").value = position.lat();
 	document.getElementById("longitude").value = position.lng();
 }
 
-// Delete position to html
+// Delete position from HTML
 function removePosition() {
 	document.getElementById("latitude").value = "";
 	document.getElementById("longitude").value = "";
 }
-// ================ MARKER END ===============================================
+
+async function radiusMode() {
+	if (!radiusStatus) {
+		radiusStatus = true;
+		document.getElementById("radius-button").style.backgroundColor = "red";
+		slider.disabled = false;
+
+		function updateSliderOutput() {
+			output.innerHTML = slider.value * 100 + " M";
+		}
+
+		updateSliderOutput();
+
+		slider.oninput = function () {
+			updateSliderOutput();
+			// Update circle radius on slider input
+			const centerLocation = new google.maps.LatLng(
+				location.lat,
+				location.lng
+			);
+			updateCircle(centerLocation, parseFloat(slider.value) * 100); // Convert to meters
+		};
+
+		// Use google.maps.LatLng directly
+		const centerLocation = new google.maps.LatLng(
+			location.lat,
+			location.lng
+		);
+		updateCircle(centerLocation, parseFloat(slider.value) * 100); // Convert to meters
+	} else {
+		radiusStatus = false;
+		slider.disabled = true;
+		slider.value = 0;
+		output.innerHTML = 0 + " M";
+		document.getElementById("radius-button").style.backgroundColor =
+			"#007bff";
+		if (circle) circle.setMap(null);
+		updateMarkersVisibility(); // Update markers visibility
+	}
+}
+
+async function updateCircle(center, radius) {
+	const { spherical } = await loadGoogleMaps();
+
+	if (circle) circle.setMap(null);
+
+	circle = new google.maps.Circle({
+		strokeColor: "#008000",
+		strokeOpacity: 0.8,
+		strokeWeight: 2,
+		fillColor: "#008000",
+		fillOpacity: 0.25,
+		map: map,
+		center: center,
+		radius: radius,
+	});
+
+	updateMarkersVisibility(); // Update markers visibility based on new circle
+}
+
+async function updateMarkersVisibility() {
+	const { spherical } = await loadGoogleMaps();
+
+	if (circle) {
+		const center = circle.getCenter();
+		const radius = circle.getRadius();
+
+		markers.forEach((markerObj) => {
+			const marker = markerObj.marker;
+			const position = markerObj.position;
+
+			const distance = spherical.computeDistanceBetween(position, center);
+			marker.setMap(distance <= radius ? map : null);
+		});
+	} else {
+		markers.forEach((markerObj) =>
+			markerObj.marker.setMap(markersMapStatus ? map : null)
+		);
+	}
+}
 
 // Get the user's location and then initialize the map with it
 getUserLocation().then(initMap);

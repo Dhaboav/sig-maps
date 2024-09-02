@@ -10,6 +10,7 @@
             <input id="show-markers" type="button" value="Show" />
             <input id="hide-markers" type="button" value="Hide" />
             <input id="add-marker" type="button" value="Add" />
+            <input id="radius-button" type="button" value="Radius" />
             <input id="reset-marker" type="button" value="Reset" />
             <br />
             <form id="form-input" action="php/save.php" method="post" enctype="multipart/form-data">
@@ -22,9 +23,9 @@
                 <button id="submit-button" type="submit">Submit</button>
             </form>
             <br/>
-            <div>
-                <input id="radius" type="number" value="" placeholder="Radius (meters)" min="0" />
-                <button id="update-radius">Update Radius</button>
+            <div class="slider-container">
+                <input type="range" min="0" max="100" value="0" class="slider" id="myRange" disabled>
+                <div class="output" id="outputValue" >0</div>
             </div>
         </div>
 		<div id="map"></div>

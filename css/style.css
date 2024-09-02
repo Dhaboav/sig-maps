@@ -76,3 +76,21 @@ form {
     display: flex;
     flex-direction: column;
 }
+
+.slider-container {
+    width: 80%;
+    display: flex;
+    flex-direction: row;
+    align-items: center; /* Align slider and output vertically */
+}
+
+.slider {
+    width: 60%; /* Slider takes up 80% of the container */
+}
+
+.output {
+    width: 40%; 
+    text-align: right; 
+    font-size: 20px;
+    margin-left: 10px;
+}
