@@ -10,7 +10,7 @@ if ($conn->connect_error) {
 }
 
 // Check if all required fields are set
-if (!isset($_POST['name-of-location'], $_POST['latitude'], $_POST['longitude'], $_POST['description']) || !isset($_FILES['image'])) {
+if (!isset($_POST['name-of-location'], $_POST['latitude'], $_POST['longitude'], $_POST['description'])) {
     die("One or more required fields are missing.");
 }
 
@@ -20,39 +20,18 @@ $latitude = $_POST['latitude'];
 $longitude = $_POST['longitude'];
 $desc = $_POST['description'];
 
-// Handle file upload
-$uploadDir = '../img/';
-$imageName = '';
-
-if (isset($_FILES['image']) && $_FILES['image']['error'] == UPLOAD_ERR_OK) {
-    $tmpName = $_FILES['image']['tmp_name'];
-    $imageName = basename($_FILES['image']['name']);
-    $uploadFile = $uploadDir . $imageName;
-
-    // Optional: Validate file type
-    $fileType = mime_content_type($tmpName);
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (!in_array($fileType, $allowedTypes)) {
-        die('Invalid file type.');
-    }
-
-    // Move the uploaded file
-    if (!move_uploaded_file($tmpName, $uploadFile)) {
-        die('File upload failed.');
-    }
-} else {
-    die('No file uploaded or there was an upload error.');
-}
-
-// Validate latitude and longitude
-if (empty($latitude) || empty($longitude) || empty($desc) || empty($imageName)) {
+// Validate latitude, longitude, and description
+if (empty($latitude) || empty($longitude) || empty($desc)) {
     die("There is empty data");
 }
 
+// Get the current time
+$currentTime = date('Y-m-d H:i:s');
+
 // Prepare SQL query
-$tableName = 'poitugas'; 
-$sql = $conn->prepare("INSERT INTO `$tableName` (name, latitude, longitude, deskripsi, linkfoto) VALUES (?, ?, ?, ?, ?)");
-$sql->bind_param('sssss', $name, $latitude, $longitude, $desc, $imageName);
+$tableName = 'utspoi2024'; 
+$sql = $conn->prepare("INSERT INTO `$tableName` (name, coordinat_lat, coordinat_long, deskripsi, datecreate, dateupdate) VALUES (?, ?, ?, ?, ?, ?)");
+$sql->bind_param('ssssss', $name, $latitude, $longitude, $desc, $currentTime, $currentTime); // Corrected to six parameters
 
 // Execute SQL query
 if ($sql->execute()) {

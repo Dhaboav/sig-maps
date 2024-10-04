@@ -10,7 +10,7 @@ if ($conn->connect_error) {
 }
 
 // Retrieve data from the database
-$tableName = 'poitugas'; 
+$tableName = 'utspoi2024'; 
 $sql = "SELECT * FROM `$tableName`";
 
 $result = $conn->query($sql);

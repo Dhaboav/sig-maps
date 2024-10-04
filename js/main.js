@@ -104,21 +104,6 @@ async function fetchMarkers() {
 	}
 }
 
-// Checking image path if exist then fetched
-async function fetchImageStatus(imagePath) {
-	try {
-		const response = await fetch(
-			`php/check_image.php?filename=${encodeURIComponent(imagePath)}`
-		);
-		if (!response.ok)
-			throw new Error(`HTTP error! Status: ${response.status}`);
-		const data = await response.json();
-		return data.status === "ok" ? data.path : "img/testo.png";
-	} catch (error) {
-		console.error("Error fetching image status:", error.message);
-		return "img/testo.png";
-	}
-}
 
 // Create markers from the fetched data
 function databaseMarkers(markerData) {
@@ -129,8 +114,8 @@ function databaseMarkers(markerData) {
 	const marker = new google.maps.marker.AdvancedMarkerElement({
 		map: null, // Set map to null initially
 		position: {
-			lat: parseFloat(markerData.latitude),
-			lng: parseFloat(markerData.longitude),
+			lat: parseFloat(markerData.coordinat_lat),
+			lng: parseFloat(markerData.coordinat_long),
 		},
 		title: markerData.name,
 		content: markerDatabase,
@@ -140,8 +125,8 @@ function databaseMarkers(markerData) {
 	markers.push({
 		marker: marker,
 		position: new google.maps.LatLng(
-			markerData.latitude,
-			markerData.longitude
+			markerData.coordinat_lat,
+			markerData.coordinat_long
 		),
 	});
 
@@ -152,12 +137,10 @@ function databaseMarkers(markerData) {
 
 // ================ MARKER START ===============================================
 async function openMarkerWindow(marker, markerData) {
-	const imagePath = await fetchImageStatus(markerData.linkfoto);
 	const content = `
         <div>
             <h3>${markerData.name}</h3>
             <p>${markerData.deskripsi}</p>
-            <img src="${imagePath}" alt="${markerData.name}" style="width:100px; height:auto;">
         </div>
     `;
 	markerWindow.setContent(content);
@@ -321,43 +304,45 @@ async function radiusMode() {
 }
 
 async function updateCircle(center, radius) {
-	const { spherical } = await loadGoogleMaps();
+    const { spherical } = await loadGoogleMaps();
 
-	if (circle) circle.setMap(null);
+    if (circle) circle.setMap(null); // Clear existing circle
 
-	circle = new google.maps.Circle({
-		strokeColor: "#008000",
-		strokeOpacity: 0.8,
-		strokeWeight: 2,
-		fillColor: "#008000",
-		fillOpacity: 0.25,
-		map: map,
-		center: center,
-		radius: radius,
-	});
+    circle = new google.maps.Circle({
+        strokeColor: "#008000",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: "#008000",
+        fillOpacity: 0.25,
+        map: map, // Make sure the circle is added to the map
+        center: center,
+        radius: radius,
+    });
 
-	updateMarkersVisibility(); // Update markers visibility based on new circle
+    // Update markers visibility right after the circle is created
+    updateMarkersVisibility();
 }
 
+
 async function updateMarkersVisibility() {
-	const { spherical } = await loadGoogleMaps();
+    const { spherical } = await loadGoogleMaps();
 
-	if (circle) {
-		const center = circle.getCenter();
-		const radius = circle.getRadius();
+    if (circle) {
+        const center = circle.getCenter();
+        const radius = circle.getRadius();
 
-		markers.forEach((markerObj) => {
-			const marker = markerObj.marker;
-			const position = markerObj.position;
+        markers.forEach((markerObj) => {
+            const marker = markerObj.marker;
+            const position = markerObj.position;
 
-			const distance = spherical.computeDistanceBetween(position, center);
-			marker.setMap(distance <= radius ? map : null);
-		});
-	} else {
-		markers.forEach((markerObj) =>
-			markerObj.marker.setMap(markersMapStatus ? map : null)
-		);
-	}
+            const distance = spherical.computeDistanceBetween(position, center);
+            marker.setMap(distance <= radius ? map : null);
+        });
+    } else {
+        markers.forEach((markerObj) =>
+            markerObj.marker.setMap(markersMapStatus ? map : null)
+        );
+    }
 }
 
 // Get the user's location and then initialize the map with it
