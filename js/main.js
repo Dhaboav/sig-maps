@@ -120,37 +120,34 @@ async function fetchImageStatus(imagePath) {
 	}
 }
 
+// Create markers from the fetched data
 function databaseMarkers(markerData) {
-    const markerDatabase = document.createElement("img");
-    markerDatabase.src =
-        "https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
+	const markerDatabase = document.createElement("img");
+	markerDatabase.src =
+		"https://maps.google.com/mapfiles/ms/icons/blue-dot.png";
 
-    const marker = new google.maps.marker.AdvancedMarkerElement({
-        map: null, // Set map to null initially
-        position: {
-            lat: parseFloat(markerData.latitude),
-            lng: parseFloat(markerData.longitude),
-        },
-        title: markerData.name,
-        content: markerDatabase,
-    });
+	const marker = new google.maps.marker.AdvancedMarkerElement({
+		map: null, // Set map to null initially
+		position: {
+			lat: parseFloat(markerData.latitude),
+			lng: parseFloat(markerData.longitude),
+		},
+		title: markerData.name,
+		content: markerDatabase,
+	});
 
-    // Store marker and its data in the markers array
-    markers.push({
-        marker: marker,
-        position: new google.maps.LatLng(
-			markerData.id,
-			markerData.name,
-            markerData.latitude,
-            markerData.longitude
-        ),
-        markerData: markerData // Add this line to store marker data
-    });
+	// Store additional information in the marker object
+	markers.push({
+		marker: marker,
+		position: new google.maps.LatLng(
+			markerData.latitude,
+			markerData.longitude
+		),
+	});
 
-    // Add click event listener to open the InfoWindow
-    marker.addListener("click", () => openMarkerWindow(marker, markerData));
+	// Add click event listener to open the InfoWindow
+	marker.addListener("click", () => openMarkerWindow(marker, markerData));
 }
-
 // ================ DATABASE END ===============================================
 
 // ================ MARKER START ===============================================
@@ -161,28 +158,11 @@ async function openMarkerWindow(marker, markerData) {
             <h3>${markerData.name}</h3>
             <p>${markerData.deskripsi}</p>
             <img src="${imagePath}" alt="${markerData.name}" style="width:100px; height:auto;">
-			<br><br>
-			<button class="delete-button" data-id="${markerData.idpoi}">Delete</button>
-			<button class="edit-button" data-id="${markerData.idpoi}">Edit</button>
         </div>
     `;
-
 	markerWindow.setContent(content);
 	markerWindow.open(map, marker);
-
-	// Move event listener registration here
-	google.maps.event.addListener(markerWindow, "domready", () => {
-        document.querySelector(".delete-button").addEventListener("click", () => {
-            const id = markerData.idpoi; // Get the marker ID
-            confirmDelete(id); // Pass the marker ID for deletion
-        });
-    
-        document.querySelector(".edit-button").addEventListener("click", () => {
-            openEditForm(markerData); // Open the edit form with marker data
-        });
-    });
 }
-
 
 // Function to resetting
 function resetButton() {
@@ -379,141 +359,6 @@ async function updateMarkersVisibility() {
 		);
 	}
 }
-
-async function confirmDelete(id) {
-    const response = await fetch('php/delete.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: id }),
-    });
-
-    if (response.ok) {
-        const result = await response.json();
-        console.log(`Response status: ${response.status}`);
-        console.log(`Raw response: ${JSON.stringify(result)}`);
-
-        // Check the 'success' property in the response
-        if (result.success) {
-            console.log(result.message); // Successful deletion message
-        } else {
-            console.log('Failed to delete marker from the database.'); // Log the failure
-        }
-    } else {
-        console.log('Failed to delete marker from the server.'); // Handle HTTP errors
-    }
-}
-
-
-function deleteMarker(markerId) {
-    fetch('php/delete.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: markerId }),
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log(data);
-        if (data.success) {
-            console.log(`Successfully deleted marker with ID: ${markerId}`);
-        } else {
-            console.error("Failed to delete marker:", data.message);
-        }
-    })
-    .catch(error => {
-        console.error("Error deleting marker:", error);
-    });
-}
-
-
-
-function confirmUpdate(position, marker) {
-    if (confirm("Do you want to update the marker position?")) {
-        updateMarkerPosition(marker, position);
-    } else {
-        marker.setPosition(originalPosition);
-        marker.setDraggable(false);
-        clearLatLngDisplay();
-    }
-}
-
-function updateMarkerPosition(marker, position) {
-    marker.setPosition(position);
-    marker.setDraggable(false);
-    clearLatLngDisplay();
-
-    fetch("php/update_marker.php", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-            id: marker.id,
-            name: marker.name,
-            lat: position.lat(),
-            lng: position.lng(),
-        }),
-    })
-        .then((response) => {
-            if (response.ok) {
-                location.reload();
-                console.log("Marker updated successfully in the database.");
-            } else {
-                console.error("Failed to update marker in the database.");
-            }
-        })
-        .catch((error) => {
-            console.error("Error updating marker:", error);
-        });
-}
-
-function enableEdit(markerData) {
-    if (confirm("Are you sure you want to edit this marker?")) {
-        // Populate the form with marker data
-        document.getElementById("name-of-location").value = markerData.name;
-        document.getElementById("latitude").value = markerData.latitude;
-        document.getElementById("longitude").value = markerData.longitude;
-        document.getElementById("description").value = markerData.deskripsi;
-
-        // Show the form (if it's hidden)
-        document.getElementById("form-input").style.display = "block";
-
-        // Listen for form submission
-        document.getElementById("submit-button").onclick = function(event) {
-            event.preventDefault(); // Prevent default form submission
-
-            // Create a FormData object to send data along with the image file
-            const formData = new FormData(document.getElementById("form-input"));
-            formData.append("id", markerData.id); // Add the marker's ID
-
-            // Send the form data via fetch
-            fetch("php/save.php", {
-                method: "POST",
-                body: formData,
-            })
-            .then((response) => {
-                if (response.ok) {
-                    console.log("Marker updated successfully.");
-                    location.reload(); // Reload the page to reflect changes
-                } else {
-                    console.error("Failed to update marker.");
-                }
-            })
-            .catch((error) => {
-                console.error("Error updating marker:", error);
-            });
-        };
-    }
-}
-
 
 // Get the user's location and then initialize the map with it
 getUserLocation().then(initMap);
